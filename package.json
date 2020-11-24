@@ -1,0 +1,16 @@
+{
+  "name": "discord-shuffle",
+  "version": "1.0.0",
+  "description": "A discord bot to shuffle mentions",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "Matheus Cristian <matheus@email.com>",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^12.4.1",
+    "dotenv": "^8.2.0"
+  }
+}
