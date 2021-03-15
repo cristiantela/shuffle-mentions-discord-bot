@@ -39,6 +39,18 @@ const readPoll = (message) => {
     poll.options[emoji].total = reaction.count - 1;
   }
 
+  poll.options = Object.keys(poll.options)
+    .sort((a, b) => {
+      const A = poll.options[a].total;
+      const B = poll.options[b].total;
+
+      return A > B ? -1 : 1;
+    })
+    .reduce((options, emoji) => {
+      options[emoji] = poll.options[emoji];
+      return options;
+    }, {});
+
   return poll;
 };
 
@@ -125,7 +137,8 @@ client.on("message", (message) => {
   }
 
   if (message.content.startsWith("create poll")) {
-    const emojis = ["🟥", "🟧", "🟨", "🟩", "🟦", "🟪", "⬛️", "⬜️", "🟫"];
+    // const emojis = ["🟥", "🟧", "🟨", "🟩", "🟦", "🟪", "⬛️", "⬜️", "🟫"];
+    const emojis = ["🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "🟤"];
 
     const args = message.content.split("\n");
 
@@ -137,6 +150,16 @@ client.on("message", (message) => {
     const response = ["```js", `// poll ${id}`, `\`\`\`**${args[1]}**`];
 
     const options = args.slice(2);
+
+    if (options.length > emojis.length) {
+      console.log("options is more than emojis");
+
+      message.channel.send(
+        `Could not create the poll because the max of the options is ${emojis.length}`
+      );
+
+      return false;
+    }
 
     options.forEach((option, index) => {
       response.push(`${emojis[index]} ${option}`);
