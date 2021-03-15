@@ -8,7 +8,8 @@ client.once("ready", () => {
   console.log("Bot Shuffle is online!");
 });
 
-const readPoll = (raw) => {
+const readPoll = (message) => {
+  const raw = message.content;
   const content = raw.split("\n");
 
   const header = content[1].match(/^\/\/ poll ([a-z0-9]+)( \((closed)\))?/);
@@ -26,14 +27,17 @@ const readPoll = (raw) => {
     const name = option.match(/^(..) (\d+% \((\d+)\) )?(.+)$/);
 
     const emoji = name[1];
-    let total = name[3] ? Number(name[3]) : 0;
     const title = name[4];
 
     poll.options[emoji] = {
       text: title,
-      total: total,
+      total: null,
     };
   });
+
+  for (let [emoji, reaction] of message.reactions.cache) {
+    poll.options[emoji].total = reaction.count - 1;
+  }
 
   return poll;
 };
@@ -84,22 +88,17 @@ client.on("messageReactionAdd", (messageReaction, user) => {
     return false;
   }
 
-  const poll = readPoll(messageReaction.message.content);
+  const poll = readPoll(messageReaction.message);
 
   if (poll.closed) {
     console.log("poll closed");
     return false;
   }
 
-  if (poll.options[messageReaction._emoji.name]) {
-    poll.options[messageReaction._emoji.name].total++;
-  }
-
   messageReaction.message.edit(renderPollMessage(poll));
 });
 
 client.on("messageReactionRemove", (messageReaction, user) => {
-  console.log(messageReaction, user);
   if (user.id === client.user.id) {
     console.log("it was the bot");
     return false;
@@ -110,17 +109,11 @@ client.on("messageReactionRemove", (messageReaction, user) => {
     return false;
   }
 
-  const content = messageReaction.message.content.split("\n");
-
-  const poll = readPoll(messageReaction.message.content);
+  const poll = readPoll(messageReaction.message);
 
   if (poll.closed) {
     console.log("poll closed");
     return false;
-  }
-
-  if (poll.options[messageReaction._emoji.name]) {
-    poll.options[messageReaction._emoji.name].total--;
   }
 
   messageReaction.message.edit(renderPollMessage(poll));
@@ -166,7 +159,7 @@ client.on("message", (message) => {
 
       messages.forEach((message) => {
         if (message.content.startsWith(pattern)) {
-          const poll = readPoll(message.content);
+          const poll = readPoll(message);
 
           poll.closed = status === "close";
 
